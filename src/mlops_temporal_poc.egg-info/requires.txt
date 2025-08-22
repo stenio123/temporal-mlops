@@ -1,0 +1,6 @@
+temporalio<2,>=1.8.0
+watchdog<7,>=6.0.0
+pandas<3,>=2.2.3
+pyyaml<7,>=6.0.2
+scikit-learn<2,>=1.7.1
+requests<3,>=2.32.3

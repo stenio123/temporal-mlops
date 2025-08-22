@@ -1,0 +1,25 @@
+Metadata-Version: 2.4
+Name: mlops-temporal-poc
+Version: 0.1.0
+Requires-Python: <4.0,>=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: temporalio<2,>=1.8.0
+Requires-Dist: watchdog<7,>=6.0.0
+Requires-Dist: pandas<3,>=2.2.3
+Requires-Dist: pyyaml<7,>=6.0.2
+Requires-Dist: scikit-learn<2,>=1.7.1
+Requires-Dist: requests<3,>=2.32.3
+
+
+1. Setup
+
+Make sure you have the environment correctly configured, following the [instructions](https://learn.temporal.io/getting_started/python/dev_environment/)
+uv pip install -e .  --only-binary=temporalio 
+Clone this repo
+```
+git clone xxx
+```
+Start a dev temporal server with
+```
+temporal server start-dev
+```

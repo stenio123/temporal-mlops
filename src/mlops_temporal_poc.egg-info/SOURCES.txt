@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/worker.py
+src/activities/__init__.py
+src/activities/data_processing.py
+src/activities/deployment.py
+src/activities/quality_gate.py
+src/activities/training.py
+src/mlops_temporal_poc.egg-info/PKG-INFO
+src/mlops_temporal_poc.egg-info/SOURCES.txt
+src/mlops_temporal_poc.egg-info/dependency_links.txt
+src/mlops_temporal_poc.egg-info/requires.txt
+src/mlops_temporal_poc.egg-info/top_level.txt
+src/triggers/__init__.py
+src/triggers/file_watcher.py
+src/workflows/__init__.py
+src/workflows/ml_ops_workflow.py

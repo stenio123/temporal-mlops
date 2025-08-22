@@ -1,0 +1,9 @@
+environment: dev
+host: localhost:8080
+replicas: 1
+resources:
+  cpu: "0.5"
+  memory: "1Gi"
+monitoring:
+  enabled: true
+  metrics_endpoint: "/metrics"
