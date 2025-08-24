@@ -1,5 +1,6 @@
 from datetime import timedelta
 from typing import Dict, Any
+import asyncio
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
@@ -69,6 +70,9 @@ class MLOpsWorkflow:
         """Execute a workflow step with logging"""
         self.current_step = step_name
         workflow.logger.info(f"🔄 Starting step: {step_name}")
+        # Add a deterministic delay using asyncio.sleep()
+        # This will pause the workflow for 2 seconds. Note that time.sleep(2) wouldnt work because it would rely on system clock
+        await asyncio.sleep(2)
 
     @workflow.run
     async def run(self, trigger_data: Dict[str, Any]) -> Dict[str, Any]:

@@ -1,5 +1,6 @@
 """
-Simple encryption codec for Temporal that encrypts only SensitiveData-wrapped objects.
+Simple encryption codec for Temporal that encrypts entire paylod.
+For an example encrypting/altering specific payloads, check https://github.com/temporalio/samples-python/blob/main/custom_converter/shared.py
 """
 import os
 from typing import Iterable, List

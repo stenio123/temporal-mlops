@@ -5,7 +5,7 @@ Proof of concept demonstrating MLOps pipeline orchestration using Temporal.io. F
 ## Architecture
 
 ```
-File Watcher → Temporal Workflow → [Preprocessing] → [Training] → [Quality Gate] → [Deployment]
+File Watcher → Temporal Workflow → [Preprocessing] → [Training] → [Store Results] → [Quality Gate] → [Deployment]
 ```
 
 ## Setup
@@ -80,8 +80,6 @@ echo '{"simulate_failure": true, "activity": "training"}' > config/failure_simul
 rm config/failure_simulation.json
 ```
 
-Available failure modes: `data_processing`, `training`, `quality_gate`, `deployment`
-
 ### External Dependency Failure Simulation
 Simulate real-world external service failures:
 
@@ -98,6 +96,7 @@ docker-compose start postgres
 #### **Authentication Failures (Non-retryable)**
 ```bash
 # Edit .env and change POSTGRES_PASSWORD to wrong value
+# stop worker.py, start worker_encrypted.py
 # Triggers InvalidPassword error - workflow fails immediately
 # No wasted retries on permanent configuration issues
 ```

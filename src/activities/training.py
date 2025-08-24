@@ -114,5 +114,5 @@ async def train_model_mock(preprocessing_result: Dict[str, Any]) -> Dict[str, An
         },
         "training_time_seconds": training_time,
         "training_completed": True,
-        "proprietary_config": proprietary_config  # This will be visible in Temporal logs
+        "proprietary_config": proprietary_config
     }

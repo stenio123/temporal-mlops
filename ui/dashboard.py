@@ -14,22 +14,72 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 # Page config
 st.set_page_config(
     page_title="MLOps Temporal Dashboard",
-    page_icon="🤖",
-    layout="centered"
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.title("🤖 MLOps Temporal Dashboard")
-st.markdown("Query workflow status and control execution with signals")
+# Custom CSS for professional styling
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    .sub-header {
+        font-size: 1.1rem;
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+    .metric-container {
+        background-color: #f8fafc;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #3b82f6;
+    }
+    .status-success {
+        background-color: #f0fdf4;
+        color: #166534;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+    .status-warning {
+        background-color: #fffbeb;
+        color: #d97706;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+    .status-error {
+        background-color: #fef2f2;
+        color: #dc2626;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+    .section-divider {
+        margin: 2rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<h1 class="main-header">MLOps Temporal Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">Monitor workflow execution and manage production deployments</p>', unsafe_allow_html=True)
 
 # Sidebar for controls
-st.sidebar.header("Controls")
+st.sidebar.markdown("### File Operations")
 
 # File upload section
-st.sidebar.subheader("Trigger Workflow")
+st.sidebar.markdown("**Upload New Dataset**")
 uploaded_file = st.sidebar.file_uploader(
-    "Upload CSV file",
+    "Choose CSV file",
     type=['csv'],
-    help="Upload CSV to trigger MLOps pipeline"
+    help="Upload CSV file to trigger MLOps pipeline",
+    label_visibility="collapsed"
 )
 
 if uploaded_file is not None:
@@ -51,27 +101,33 @@ if uploaded_file is not None:
     #    st.rerun()
 
 # File management section
-st.sidebar.subheader("File Management")
+st.sidebar.markdown("**Manage Existing Files**")
 raw_files = []
 if os.path.exists("data/raw"):
     raw_files = [f for f in os.listdir("data/raw") if f.endswith('.csv')]
 
 if raw_files:
-    selected_file = st.sidebar.selectbox("Select file to delete:", [""] + raw_files)
+    selected_file = st.sidebar.selectbox(
+        "Files in data/raw/", 
+        [""] + raw_files,
+        label_visibility="collapsed"
+    )
     
-    if selected_file and st.sidebar.button("🗑️ Delete File", key="delete_file_btn"):
+    if selected_file and st.sidebar.button("Delete Selected File", key="delete_file_btn", type="secondary"):
         try:
             file_to_delete = f"data/raw/{selected_file}"
             os.remove(file_to_delete)
             st.sidebar.success(f"Deleted {selected_file}")
             st.rerun()
         except Exception as e:
-            st.sidebar.error(f"Error deleting file: {e}")
+            st.sidebar.error(f"Error: {e}")
 else:
-    st.sidebar.info("No CSV files in data/raw/")
+    st.sidebar.info("No files available")
 
 # Auto-refresh
-auto_refresh = st.sidebar.checkbox("Auto-refresh (2s)", value=False)
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Dashboard Settings**")
+auto_refresh = st.sidebar.checkbox("Auto-refresh every 2 seconds", value=False)
 
 async def get_temporal_client(with_encryption=True):
     """Get Temporal client connection with optional encryption support"""
@@ -125,6 +181,12 @@ async def query_workflow_status(workflow_id: str):
     if client:
         try:
             handle = client.get_workflow_handle(workflow_id)
+            
+            # Check if workflow is still running first
+            workflow_description = await handle.describe()
+            if workflow_description.status.name in ["CANCELLED", "TERMINATED", "FAILED", "TIMED_OUT"]:
+                return {"workflow_status": "cancelled", "current_step": "cancelled"}
+            
             status = await handle.query(MLOpsWorkflow.get_status)
             return status
         except Exception as encrypted_error:
@@ -134,6 +196,12 @@ async def query_workflow_status(workflow_id: str):
                 if client:
                     try:
                         handle = client.get_workflow_handle(workflow_id)
+                        
+                        # Check if workflow is still running first
+                        workflow_description = await handle.describe()
+                        if workflow_description.status.name in ["CANCELLED", "TERMINATED", "FAILED", "TIMED_OUT"]:
+                            return {"workflow_status": "cancelled", "current_step": "cancelled"}
+                        
                         status = await handle.query(MLOpsWorkflow.get_status)
                         return status
                     except Exception as non_encrypted_error:
@@ -172,32 +240,37 @@ async def approve_prod_deployment(workflow_id: str):
     
     return False
 
-# Workflow controls - inline implementation for simplicity
-st.subheader("🎮 Workflow Control")
+# Main content area
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+# Workflow controls section
+st.markdown("### Workflow Monitoring")
+st.markdown("Enter a workflow ID to monitor its progress and manage approvals.")
 
 # Get workflow ID input - auto-populate if available
 default_workflow_id = st.session_state.get("auto_workflow_id", "")
 
-col1, col2 = st.columns([3, 1])
+col1, col2 = st.columns([4, 1])
 with col1:
     workflow_id = st.text_input(
         "Workflow ID",
         value=default_workflow_id,
-        placeholder="mlops-1234567890-filename", 
-        help="Auto-populated from recent workflows or enter manually"
+        placeholder="e.g., mlops-1234567890-filename",
+        help="Enter workflow ID or use 'Get Latest' button"
     )
 
 with col2:
-    st.write("")  # Add spacing
-    if st.button("🔄 Get Latest", help="Fetch the most recent workflow"):
-        recent_workflow = asyncio.run(get_most_recent_workflow())
-        if recent_workflow:
-            st.session_state.auto_workflow_id = recent_workflow
-            st.session_state.auto_query = True  # Flag to auto-query the workflow
-            st.success(f"Found: {recent_workflow}")
-            st.rerun()
-        else:
-            st.warning("No recent workflows found")
+    st.markdown("<br>", unsafe_allow_html=True)  # Align button with input
+    if st.button("Get Latest", help="Fetch the most recent workflow", type="secondary"):
+        with st.spinner("Searching for workflows..."):
+            recent_workflow = asyncio.run(get_most_recent_workflow())
+            if recent_workflow:
+                st.session_state.auto_workflow_id = recent_workflow
+                st.session_state.auto_query = True
+                st.success(f"Found: {recent_workflow[:30]}...")
+                st.rerun()
+            else:
+                st.warning("No recent workflows found")
 
 # Auto-query if flag is set or if workflow_id exists
 should_query = workflow_id and (st.session_state.get("auto_query", False) or workflow_id != "")
@@ -210,7 +283,7 @@ if should_query:
     # Query and display workflow status
     status = asyncio.run(query_workflow_status(workflow_id))
     if status:
-        st.success("✅ Workflow Status")
+        st.markdown("### Workflow Status")
         
         col1, col2 = st.columns(2)
         
@@ -225,7 +298,9 @@ if should_query:
             quality_gate_failed = status.get("quality_gate_failed", False)
             deployment_status = status.get("deployment_status", "unknown")
             
-            if current_step == "awaiting_prod_approval":
+            if current_step == "cancelled":
+                st.error("❌ WORKFLOW CANCELLED")
+            elif current_step == "awaiting_prod_approval":
                 st.warning("🔒 AWAITING APPROVAL")
             elif current_step == "completed":
                 if quality_gate_failed:
@@ -241,54 +316,67 @@ if should_query:
         
         # Show approval button if waiting for approval
         if status.get("awaiting_approval", False):
-            st.divider()
-            st.subheader("🚀 Production Deployment Approval")
-            st.warning("**Human approval required for production deployment**")
+            st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+            st.markdown("### Production Deployment Approval")
+            st.info("This workflow requires human approval before deploying to production.")
             
-            if st.button("✅ Approve Production Deployment", key="approve_btn", type="primary"):
-                with st.spinner("Sending approval..."):
+            if st.button("Approve Production Deployment", key="approve_btn", type="primary", use_container_width=False):
+                with st.spinner("Sending approval signal..."):
                     if asyncio.run(approve_prod_deployment(workflow_id)):
-                        st.success("✅ Production deployment approved!")
+                        st.success("Production deployment approved successfully!")
                         st.rerun()
         
         # Show quality metrics if available
         quality_metrics = status.get("quality_metrics")
         if quality_metrics:
-            st.divider()
-            st.markdown("**Model Quality Metrics:**")
+            st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+            st.markdown("### Model Quality Metrics")
+            
             metric_col1, metric_col2, metric_col3 = st.columns(3)
             
             with metric_col1:
                 accuracy = quality_metrics.get("accuracy", 0)
-                color = "normal" if accuracy > 0.8 else "inverse"
-                st.metric("Accuracy", f"{accuracy:.3f}", delta_color=color)
+                delta = f"{'+' if accuracy > 0.8 else ''}{((accuracy - 0.8) * 100):.1f}% vs threshold"
+                st.metric("Accuracy", f"{accuracy:.3f}", delta=delta)
             
             with metric_col2:
                 mae = quality_metrics.get("mae", 0)
-                color = "normal" if mae < 2.5 else "inverse" 
-                st.metric("MAE", f"{mae:.3f}", delta_color=color)
+                delta = f"{'-' if mae < 2.5 else '+'}{abs((mae - 2.5)):.2f} vs threshold"
+                st.metric("Mean Absolute Error", f"{mae:.3f}", delta=delta)
             
             with metric_col3:
                 r2 = quality_metrics.get("r2_score", 0)
-                color = "normal" if r2 > 0.7 else "inverse"
-                st.metric("R² Score", f"{r2:.3f}", delta_color=color)
+                delta = f"{'+' if r2 > 0.7 else ''}{((r2 - 0.7) * 100):.1f}% vs threshold"
+                st.metric("R² Score", f"{r2:.3f}", delta=delta)
             
             # Show quality gate thresholds for reference
+            quality_gate_failed = status.get("quality_gate_failed", False)
             if quality_gate_failed:
-                st.info("💡 **Quality Gate Requirements:** Accuracy > 0.8, MAE < 2.5, R² > 0.7")
+                st.warning("⚠️ **Quality Gate Requirements:** Accuracy > 0.8, MAE < 2.5, R² > 0.7")
 
         if completed_steps:
-            st.divider()
-            st.markdown("**Completed Steps:**")
-            for step in completed_steps:
-                st.write(f"✅ {step}")
+            st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+            st.markdown("### Pipeline Progress")
+            
+            progress_cols = st.columns(len(completed_steps) if len(completed_steps) <= 5 else 5)
+            for i, step in enumerate(completed_steps[:5]):  # Limit to 5 steps for clean display
+                with progress_cols[i % 5]:
+                    step_name = step.replace('_', ' ').title()
+                    st.markdown(f'<div style="text-align: center; padding: 0.5rem; background-color: #282b30; border-radius: 0.5rem; border: 1px solid #bbf7d0;"><strong>✅ {step_name}</strong></div>', unsafe_allow_html=True)
     
     elif workflow_id:
-        st.warning("⚠️ Workflow not found or not running")
+        st.error("Workflow not found or not accessible. Please verify the workflow ID.")
 
-else:
-    st.info("💡 Enter a workflow ID above to monitor and control it")
-    st.markdown("Find workflow IDs at: [Temporal Web UI](http://localhost:8233/)")
+elif not workflow_id:
+    st.markdown("### Getting Started")
+    st.markdown("""
+    **To monitor a workflow:**
+    1. Enter a workflow ID in the field above, or
+    2. Click "Get Latest" to find the most recent workflow, or  
+    3. Upload a CSV file in the sidebar to trigger a new workflow
+    
+    **Find workflow IDs:** [Temporal Web UI](http://localhost:8233/)
+    """)
 
 # Auto-refresh
 if auto_refresh:

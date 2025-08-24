@@ -95,29 +95,28 @@ async def log_experiment(training_result: Dict[str, Any]) -> Dict[str, Any]:
             **training_result  # Pass through all training data
         }
         
-    except (psycopg2.errors.InvalidAuthorizationSpecification, 
-            psycopg2.errors.InvalidPassword) as e:
-        # Class 28: Invalid Authorization Specification - non-retryable
-        activity.logger.error(f"❌ Database authentication failed: {e}")
-        raise ApplicationError(
-            f"Database credentials invalid: {e}",
-            non_retryable=True,
-            type="AuthenticationError"
-        )
-    
-    except psycopg2.errors.InvalidCatalogName as e:
-        # Database doesn't exist - non-retryable configuration error
-        activity.logger.error(f"❌ Database does not exist: {e}")
-        raise ApplicationError(
-            f"Database configuration error - database does not exist: {e}",
-            non_retryable=True,
-            type="DatabaseConfigError"
-        )
-    
     except psycopg2.OperationalError as e:
-        # Network/connection issues (retryable) - database might be starting up
-        activity.logger.warning(f"⚠️ Database connection failed (retryable): {e}")
-        raise Exception(f"Experiment tracking database unavailable: {e}")
+        error_msg = str(e)
+        # Check for authentication errors (non-retryable)
+        if "password authentication failed" in error_msg or "authentication failed" in error_msg:
+            activity.logger.error(f"❌ Database authentication failed: {e}")
+            raise ApplicationError(
+                f"Experiment tracking database unavailable: {e}",
+                non_retryable=True,
+                type="AuthenticationError"
+            )
+        # Check for database doesn't exist error (non-retryable)
+        elif "database" in error_msg and "does not exist" in error_msg:
+            activity.logger.error(f"❌ Database does not exist: {e}")
+            raise ApplicationError(
+                f"Experiment tracking database unavailable: {e}",
+                non_retryable=True,
+                type="DatabaseConfigError"
+            )
+        # Other network/connection issues (retryable) - database might be starting up
+        else:
+            activity.logger.warning(f"⚠️ Database connection failed (retryable): {e}")
+            raise Exception(f"Experiment tracking database unavailable: {e}")
         
     except psycopg2.Error as e:
         # Other PostgreSQL errors - treat as configuration issues (non-retryable)

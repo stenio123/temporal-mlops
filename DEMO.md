@@ -47,9 +47,10 @@ File Watcher → Temporal Workflow → [Preprocessing] → [Training] → [Quali
    temporal server start-dev
    ```
 
-2. **Terminal 2: PostgreSQL (External Dependency)**
+2. **Terminal 2: PostgreSQL (External Dependency) and Streamlit**
    ```bash
-   docker-compose up postgres
+   docker-compose up postgres -d
+   streamlit run ui/dashboard.py
    ```
 
 3. **Terminal 3: Standard Worker**
@@ -69,12 +70,12 @@ File Watcher → Temporal Workflow → [Preprocessing] → [Training] → [Quali
 ### Trigger First Workflow
 ```bash
 # Drop a "good" file to ensure quality gate passes
-cp data/examples/abalone.csv data/raw/good_model.csv
+cp data/examples/abalone.data data/raw/good.csv
 ```
 
 ### Follow Workflow Execution
 **In Temporal Web UI, show:**
-1. **Workflow appears** - `mlops-{timestamp}-good_model`
+1. **Workflow appears** - `mlops-{timestamp}-good`
 2. **Activity progression** - Each step executing
 3. **Activity details** - Input/output data visible
 4. **Timeline view** - Duration and sequence
@@ -101,7 +102,8 @@ cp data/examples/abalone.csv data/raw/good_model.csv
 echo '{"simulate_failure": true, "activity": "training"}' > config/failure_simulation.json
 
 # Trigger workflow
-cp data/examples/abalone.csv data/raw/failing_training.csv
+rm data/raw/good.csv
+cp data/examples/abalone.data data/raw/good.csv
 ```
 
 **In Temporal Web UI, show:**
@@ -121,7 +123,8 @@ cp data/examples/abalone.csv data/raw/failing_training.csv
 docker-compose stop postgres
 
 # Trigger workflow
-cp data/examples/abalone.csv data/raw/db_failure.csv
+rm data/raw/good.csv
+cp data/examples/abalone.data data/raw/good.csv.csv
 ```
 
 **Show in Temporal Web UI:**
@@ -143,6 +146,7 @@ docker-compose start postgres
 ### Show Non-Retryable Failures
 ```bash
 # Edit .env to wrong database password
+# stop and restart worker.py to restart connection to db
 # This simulates configuration errors
 ```
 
@@ -171,8 +175,9 @@ streamlit run ui/dashboard.py
 
 ### Trigger Production Deployment Scenario
 ```bash
+rm data/raw/good.csv
 # Use "good" filename to ensure quality gate passes
-cp data/examples/abalone.csv data/raw/prod_candidate.csv
+cp data/examples/abalone.data data/raw/good.csv
 ```
 
 ### Show Workflow Waiting for Approval
@@ -214,7 +219,8 @@ cp data/examples/abalone.csv data/raw/prod_candidate.csv
 
 ```bash
 # Trigger workflow with standard worker
-cp data/examples/abalone.csv data/raw/sensitive_data.csv
+rm data/raw/good.csv
+cp data/examples/abalone.data data/raw/good.csv
 ```
 
 **In Temporal Web UI:**
@@ -236,6 +242,7 @@ cp data/examples/abalone.csv data/raw/sensitive_data.csv
 
 **Terminal 3: Start Encrypted Worker**
 ```bash
+# stop current worker.py
 python src/worker_encrypted.py
 ```
 
@@ -247,7 +254,8 @@ Encryption: Simple demo codec active
 
 ### Trigger Encrypted Workflow
 ```bash
-cp data/examples/abalone.csv data/raw/good.csv
+rm data/raw/good.csv
+cp data/examples/abalone.data data/raw/good.csv
 ```
 
 **In Temporal Web UI:**
