@@ -29,7 +29,7 @@ tree src/
 
 ### Show README.md Architecture
 ```
-File Watcher → Temporal Workflow → [Preprocessing] → [Training] → [Quality Gate] → [Deployment]
+File Watcher → Temporal Workflow → [Preprocessing] → [Training] → [Store Results] → [Quality Gate] → [Deployment]
 ```
 
 **Key Points:**
