@@ -1,6 +1,8 @@
 import pandas as pd
 import os
+import json
 from temporalio import activity
+from temporalio.exceptions import ApplicationError
 from typing import Dict, Any
 
 @activity.defn
@@ -10,11 +12,19 @@ async def preprocess_data(trigger_data: Dict[str, Any]) -> Dict[str, Any]:
     
     activity.logger.info(f"Processing data file: {file_path}")
     
+    # Basic validation - only catch the most critical issues
+    if not os.path.exists(file_path):
+        raise ApplicationError("File not found", non_retryable=True)
+    
     # Load abalone dataset
     df = pd.read_csv(file_path, names=[
         'sex', 'length', 'diameter', 'height', 'whole_weight',
         'shucked_weight', 'viscera_weight', 'shell_weight', 'rings'
     ])
+
+    # Basic data validation
+    if len(df) < 10:
+        raise ApplicationError("Insufficient data for training", non_retryable=True)
     
     # Simulate preprocessing steps
     # Convert sex to numeric

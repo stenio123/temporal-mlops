@@ -1,5 +1,8 @@
 import time
 import yaml
+import os
+import json
+import random
 from temporalio import activity
 from typing import Dict, Any
 
@@ -15,6 +18,11 @@ async def deploy_to_environment(deployment_data: Dict[str, Any]) -> Dict[str, An
     # Load environment config
     with open(f"config/{environment}.yml", "r") as f:
         env_config = yaml.safe_load(f)
+
+    # Simulate occasional deployment failures that should retry
+    if random.random() < 0.1:
+        raise Exception(f"Deployment service temporarily unavailable")
+    
     
     # Simulate deployment steps
     # We are grouping all the steps within this activity to simplify the workflow and minimize network calls.

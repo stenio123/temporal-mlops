@@ -4,3 +4,7 @@ pandas<3,>=2.2.3
 pyyaml<7,>=6.0.2
 scikit-learn<2,>=1.7.1
 requests<3,>=2.32.3
+streamlit<2,>=1.48.1
+psycopg2-binary<3,>=2.9.0
+python-dotenv<2,>=1.0.0
+cryptography<42,>=41.0.0

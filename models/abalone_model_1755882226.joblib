@@ -1,1 +1,0 @@
-{"model_type": "RandomForestRegressor", "hyperparameters": {"n_estimators": 50, "max_depth": 15, "random_state": 42}, "training_data": "/Users/stenio123/Projects/Temporal/mlops-temporal-poc/data/processed/abalone4.csv", "trained_at": 1755882226.25088}

@@ -1,9 +1,18 @@
+import os
+import json
 from temporalio import activity
 from typing import Dict, Any
 
 @activity.defn
 async def assess_model_quality(training_result: Dict[str, Any]) -> Dict[str, Any]:
     """Assess if model meets quality thresholds"""
+    
+    # Check for failure simulation
+    if os.path.exists("config/failure_simulation.json"):
+        with open("config/failure_simulation.json", "r") as f:
+            config = json.load(f)
+        if config.get("activity") == "quality_gate":
+            raise Exception("Simulated quality gate failure")
     
     metrics = training_result["metrics"]
     
