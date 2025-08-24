@@ -1,6 +1,0 @@
-activities
-codecs
-triggers
-worker
-worker_encrypted
-workflows
